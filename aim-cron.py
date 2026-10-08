@@ -941,12 +941,11 @@ section[id],details{scroll-margin-top:6rem}
 .daily-search label,.navbar-search label{font-size:11px;font-weight:650}
 .navbar-search input{width:100%;font-size:13px}
 .daily-search[hidden],.navbar-search[hidden]{display:none}
-.daily-search label{font-size:12px;font-weight:650}
+.daily-search{margin-left:20px}
 input,select{font:inherit;background:var(--surface);border:1px solid #aebbc4;border-radius:5px;
  color:var(--ink);padding:10px 12px;min-height:42px;max-width:100%;min-width:0}
 input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .daily-search input{width:100%;min-width:0;font-size:13px}
-.daily-search span{font-size:11px;color:var(--muted)}
 .archive-toolbar{display:grid;grid-template-columns:minmax(110px,1fr) minmax(110px,1fr) auto;
  gap:12px;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px}
 .archive-toolbar label{display:block;font-size:11px;font-weight:700;margin-bottom:7px}
@@ -1038,12 +1037,9 @@ PAGE_JS += r"""
     const input = daily.querySelector('input');
     const panels = Array.from(document.querySelectorAll('details.notice'));
     const values = panels.map(panel => normalize(panel.textContent));
-    const status = daily.querySelector('[role="status"]');
     const filter = () => {
       const terms = normalize(input.value).trim().split(/\s+/).filter(Boolean);
-      let count = 0;
-      panels.forEach((panel, i) => { panel.hidden = !allTerms(values[i], terms); if (!panel.hidden) count++; });
-      status.textContent = count + ' of ' + panels.length + ' entries';
+      panels.forEach((panel, i) => { panel.hidden = !allTerms(values[i], terms); });
     };
     input.addEventListener('input', filter);
     // A permalink always reveals its target, even if a previous search hid it.
@@ -1344,9 +1340,9 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
             parts.append(edition_navigation(archive_names, current_archive, archive))
     parts.append('<a href="#coverage">Coverage</a>')
     parts += [
-        ('<div class="daily-search" data-daily-search hidden><label for="daily-search">Find in this edition</label>'
-         + '<input type="search" id="daily-search" placeholder="Topic, researcher or source…">'
-         + '<span role="status" aria-live="polite"></span></div>') if count else '',
+        ('<div class="daily-search" data-daily-search hidden>'
+         + '<input type="search" id="daily-search" aria-label="Find in this edition" placeholder="Topic, researcher or source…">'
+         + '</div>') if count else '',
         '</nav></div></header><div class="shell">']
     if demo:
         parts.append('<aside class="demo-banner"><strong>FICTIONAL DEMO.</strong> '
