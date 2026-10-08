@@ -1,0 +1,13 @@
+# User crontab example. Replace /absolute/path with your own paths.
+# Initialize once before installing this entry:
+# /usr/bin/python3 /absolute/path/aimaths/aim-cron.py --init --private-dir /absolute/path/aim-private --output-dir /absolute/path/aim-html --logs-dir /absolute/path/aim-logs
+# Edit your crontab with: crontab -e
+# Paste the environment settings and daily entry below into your existing crontab.
+# Include the directory containing your Codex CLI in PATH, if necessary.
+SHELL=/bin/sh
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# Run daily at 07:00 in the cron daemon's local timezone.
+# The HTML and logs directories are loaded from the saved private configuration.
+# cron.log captures startup errors too; initialization creates the logs directory.
+0 7 * * * umask 077; /usr/bin/python3 /absolute/path/aimaths/aim-cron.py --private-dir /absolute/path/aim-private >> /absolute/path/aim-logs/cron.log 2>&1
