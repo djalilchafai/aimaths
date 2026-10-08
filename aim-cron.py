@@ -146,7 +146,7 @@ def output_directory(root, config):
     """Résout les chemins et refuse l'imbrication des zones publique et privée."""
     raw = config.get("output_dir")
     if not isinstance(raw, str) or not raw.strip():
-        raise ValueError("Indiquez --output-dir lors de la première initialisation (chemin non vide)")
+        raise ValueError("--output-dir doit être un chemin non vide")
     public = Path(raw).expanduser()
     if not public.is_absolute():
         public = root / public
@@ -1914,10 +1914,10 @@ def main(argv=None):
                         required=True,
                         help="Dossier des données privées (obligatoire)")
     parser.add_argument("--init", action="store_true", help="Initialiser sans appel à Codex")
-    parser.add_argument("--output-dir", type=str,
-                        help="Avec --init : mémoriser le dossier des pages HTML")
-    parser.add_argument("--logs-dir", type=str,
-                        help="Avec --init : mémoriser le dossier privé des journaux (défaut : logs sous --private-dir)")
+    parser.add_argument("--output-dir", type=str, required=True,
+                        help="Dossier des pages HTML (obligatoire)")
+    parser.add_argument("--logs-dir", type=str, required=True,
+                        help="Dossier privé des journaux (obligatoire)")
     parser.add_argument("--migrate-from", type=Path,
                         help="Avec --init : importer les données d'une ancienne installation sans les supprimer")
     parser.add_argument("--force", action="store_true", help="Relancer même si une édition existe aujourd'hui")
@@ -1959,10 +1959,6 @@ def main(argv=None):
             parser.error("--max-history-days exige --bootstrap-month et un entier entre 1 et 31")
     if args.render_only and (args.init or args.demo or args.force):
         parser.error("--render-only ne se combine pas avec --init, --demo ou --force")
-    if args.output_dir is not None and not args.init:
-        parser.error("--output-dir doit être employé avec --init")
-    if args.logs_dir is not None and not args.init:
-        parser.error("--logs-dir doit être employé avec --init")
     if args.migrate_from is not None and not args.init:
         parser.error("--migrate-from doit être employé avec --init")
     os.umask(0o077)  # Données privées par défaut ; seuls les fichiers HTML sont 0644.

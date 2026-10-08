@@ -8,6 +8,6 @@ SHELL=/bin/sh
 PATH=/usr/local/bin:/usr/bin:/bin
 
 # Run daily at 07:00 in the cron daemon's local timezone.
-# The HTML and logs directories are loaded from the saved private configuration.
+# All three directory parameters are required on every run.
 # cron.log captures startup errors too; initialization creates the logs directory.
-0 7 * * * umask 077; /usr/bin/python3 /absolute/path/aimaths/aim-cron.py --private-dir /absolute/path/aim-private >> /absolute/path/aim-logs/cron.log 2>&1
+0 7 * * * umask 077; /usr/bin/python3 /absolute/path/aimaths/aim-cron.py --private-dir /absolute/path/aim-private --output-dir /absolute/path/aim-html --logs-dir /absolute/path/aim-logs >> /absolute/path/aim-logs/cron.log 2>&1
