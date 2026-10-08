@@ -935,8 +935,9 @@ section[id],details{scroll-margin-top:6rem}
 .toc ol{padding-left:22px;margin:0}
 .toc li{padding:4px 0}.toc a{text-decoration:none}
 .masthead-inner{flex-wrap:wrap;gap:12px;padding-top:12px;padding-bottom:12px}
-.nav{flex-wrap:wrap}
-.daily-search,.navbar-search{margin:0;display:grid;gap:3px;flex:1 1 230px;max-width:320px}
+.nav{flex:1;min-width:0;justify-content:flex-end;flex-wrap:nowrap;gap:16px}
+.nav>a,.edition-pager{flex-shrink:0}
+.daily-search,.navbar-search{margin:0;display:grid;gap:3px;flex:1 1 230px;min-width:0;max-width:320px}
 .daily-search label,.navbar-search label{font-size:11px;font-weight:650}
 .navbar-search input{width:100%;font-size:13px}
 .daily-search[hidden],.navbar-search[hidden]{display:none}
@@ -944,7 +945,7 @@ section[id],details{scroll-margin-top:6rem}
 input,select{font:inherit;background:var(--surface);border:1px solid #aebbc4;border-radius:5px;
  color:var(--ink);padding:10px 12px;min-height:42px;max-width:100%;min-width:0}
 input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-.daily-search input{flex:1;min-width:min(100%,230px);font-size:13px}
+.daily-search input{width:100%;min-width:0;font-size:13px}
 .daily-search span{font-size:11px;color:var(--muted)}
 .archive-toolbar{display:grid;grid-template-columns:minmax(110px,1fr) minmax(110px,1fr) auto;
  gap:12px;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px}
@@ -977,7 +978,7 @@ input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline
 .archive-titles{list-style:none;padding:0;margin:13px 0 0;display:grid;gap:12px}
 .archive-titles a{text-decoration:none;display:block}.archive-titles span{display:block;font-size:11px;color:var(--muted);margin-top:3px}
 .edition-open{font-size:12px;font-weight:650}
-@media(max-width:720px){.nav{width:100%}.daily-search,.navbar-search{max-width:none}
+@media(max-width:720px){.nav{flex-basis:100%;flex-wrap:wrap}.daily-search,.navbar-search{max-width:none}
  .archive-toolbar{grid-template-columns:1fr 1fr}
  .archive-toolbar button{grid-column:1/-1}
  .month-layout{grid-template-columns:1fr}.calendar-card{max-width:340px}
