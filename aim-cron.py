@@ -1215,10 +1215,10 @@ def browse_page(records, names, demo=False):
     parts = ['<!doctype html><html lang="en"><head><meta charset="utf-8">',
              '<meta name="viewport" content="width=device-width, initial-scale=1">',
              '<meta name="color-scheme" content="light">',
-             '<title>Browse archive — AI &amp; mathematics</title><style>' + PAGE_CSS + '</style></head><body>',
+             '<title>Browse archive — AI &amp; Maths</title><style>' + PAGE_CSS + '</style></head><body>',
              '<a class="skip-link" href="#main">Skip to archive</a>',
              '<header class="masthead"><div class="shell masthead-inner">',
-             '<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>Research watch</a>',
+             '<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>AI &amp; Maths watch</a>',
              '<nav class="nav" aria-label="Main navigation"><a href="index.html">Latest edition</a>',
              '<a href="browse.html" aria-current="page">Browse archive</a></nav></div></header>',
              '<div class="shell"><section class="hero"><p class="eyebrow">Research library</p>',
@@ -1290,6 +1290,7 @@ def browse_page(records, names, demo=False):
         parts.append('</div></div></section>')
     parts += ['</main><footer class="footer"><p><strong>Automated digest, not independently reviewed.</strong></p>',
               '<p>Only public edition content is indexed here. Search does not query X or any external service.</p>',
+              '<p><a href="https://github.com/djalilchafai/aimaths">GitHub repository</a></p>',
               '<p><a href="index.html">Return to the latest edition</a></p></footer></div>',
               '<script>' + PAGE_JS + '</script></body></html>\n']
     return '\n'.join(parts)
@@ -1325,7 +1326,7 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
         "<style>" + PAGE_CSS + "</style></head><body>",
         '<a class="skip-link" href="#main">Skip to research updates</a>',
         '<header class="masthead"><div class="shell masthead-inner">',
-        '<a class="brand" href="' + home + '"><span class="brand-mark" aria-hidden="true">m</span>Research watch</a>',
+        '<a class="brand" href="' + home + '"><span class="brand-mark" aria-hidden="true">m</span>AI &amp; Maths watch</a>',
         '<nav class="nav" aria-label="Edition navigation">',
     ]
     if archive:
@@ -1345,7 +1346,7 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
     parts += [
         '<section class="hero" aria-labelledby="page-title">',
         '<p class="eyebrow">' + ("Retrospective research digest" if retrospective else ("Archived edition" if archive else "Daily research digest")) + '</p>',
-        '<h1 id="page-title">AI &amp; mathematics</h1>',
+        '<h1 id="page-title">AI &amp; Maths</h1>',
         '<p class="dek">Research, proofs and tools. Sources first, claims in context.</p>',
         '<div class="edition-meta"><time datetime="' + e(generated.isoformat(), quote=True) + '">'
         + e(stamp) + '</time><span>' + str(count) + (' entry' if count == 1 else ' entries')
@@ -1443,6 +1444,7 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
               '<p>Generated on ' + e(stamp) + '. Dates are shown in Europe/Paris time.</p>',
               '<p>Automated checks cover data structure and HTML escaping only; '
               'facts, links and scientific assessments still require verification.</p>',
+              '<p><a href="https://github.com/djalilchafai/aimaths">GitHub repository</a></p>',
               '</footer></div><script type="text/javascript">' + PAGE_JS + '</script></body></html>\n']
     return '\n'.join(parts)
 
