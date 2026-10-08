@@ -933,9 +933,6 @@ section[id],details{scroll-margin-top:6rem}
  width:32px;height:36px;padding:0;font-size:20px;text-decoration:none;border-radius:5px}
 .nav .edition-pager a:hover{background:var(--tint);text-decoration:none}
 .is-disabled{color:var(--muted);opacity:.4}
-.toc{margin:0 0 24px}
-.toc ol{padding-left:22px;margin:0}
-.toc li{padding:4px 0}.toc a{text-decoration:none}
 .masthead-inner{flex-wrap:wrap;gap:12px;padding-top:12px;padding-bottom:12px}
 .nav{flex:1;min-width:0;justify-content:flex-end;flex-wrap:nowrap;gap:16px}
 .nav>a,.edition-pager{flex-shrink:0}
@@ -1049,11 +1046,6 @@ PAGE_JS += r"""
       if (/^#item-[a-f0-9]{12}$/.test(location.hash)) { input.value = ''; filter(); }
     };
     window.addEventListener('hashchange', clearForHash);
-    document.querySelectorAll('.toc a').forEach(link => link.addEventListener('click', () => {
-      input.value = ''; filter();
-      const target = document.getElementById(link.getAttribute('href').slice(1));
-      if (target) { target.hidden = false; target.open = true; }
-    }));
     filter();
   }
   const tools = document.querySelector('[data-archive-tools]');
@@ -1367,9 +1359,6 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
         + ' · ' + str(source_count) + (' linked source' if source_count == 1 else ' linked sources') + '</span>',
         '<span class="status status-' + e(digest["status"], quote=True) + '">' + e(status_label) + '</span>',
         '</span></h2><p>' + e(digest["summary"]) + '</p></section>',
-        ('<details class="utility toc"><summary><span>In this edition</span><span class="toggle-icon" aria-hidden="true"></span></summary>'
-         + '<div class="utility-body"><ol>' + ''.join('<li><a href="#' + item_anchor(item, i) + '">'
-           + e(item['title']) + '</a></li>' for i, item in enumerate(digest['items'], 1)) + '</ol></div></details>') if count else '',
         '<section aria-labelledby="updates-heading"><div class="section-header">',
         '<h2 id="updates-heading">Research updates<span class="section-count">'
         + ("Select an entry to read more" if count else "No entries in this edition") + '</span></h2>',
