@@ -810,7 +810,9 @@ h1{font:normal clamp(2.5rem,5vw,3.9rem)/1.1 var(--serif);letter-spacing:-.04em;m
  border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 8px 8px 0}
 .overview p{margin:0;font-size:16px;line-height:1.8;white-space:pre-line;overflow-wrap:anywhere}
 .overview h2{font:700 10px var(--sans);letter-spacing:.16em;text-transform:uppercase;
- color:var(--accent);margin:0 0 9px}
+ color:var(--accent);margin:0 0 9px;display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px}
+.overview h2 .edition-meta{margin:0;font-weight:400;letter-spacing:normal;text-transform:none;
+ gap:10px 16px}
 .section-header{display:flex;justify-content:space-between;align-items:center;gap:16px;
  flex-wrap:wrap;margin:0 0 14px}
 .section-header h2{margin:0;font-size:13px;font-weight:700;letter-spacing:.025em}
@@ -1358,13 +1360,13 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
          else '<p class="eyebrow">Archived edition</p>' if archive else ''),
         '<p class="dek">Updates on artificial intelligence for mathematical research, '
         'proof discovery and formal verification, with links to papers, code and tools.</p>',
-        '<div class="edition-meta"><time datetime="' + e(generated.isoformat(), quote=True) + '">'
+        '</section>',
+        '<main id="main"><section class="overview" aria-labelledby="overview-heading">',
+        '<h2 id="overview-heading"><span>At a glance</span><span class="edition-meta"><time datetime="' + e(generated.isoformat(), quote=True) + '">'
         + e(stamp) + '</time><span>' + str(count) + (' entry' if count == 1 else ' entries')
         + ' · ' + str(source_count) + (' linked source' if source_count == 1 else ' linked sources') + '</span>',
         '<span class="status status-' + e(digest["status"], quote=True) + '">' + e(status_label) + '</span>',
-        '</div></section>',
-        '<main id="main"><section class="overview" aria-labelledby="overview-heading">',
-        '<h2 id="overview-heading">At a glance</h2><p>' + e(digest["summary"]) + '</p></section>',
+        '</span></h2><p>' + e(digest["summary"]) + '</p></section>',
         ('<details class="utility toc"><summary><span>In this edition</span><span class="toggle-icon" aria-hidden="true"></span></summary>'
          + '<div class="utility-body"><ol>' + ''.join('<li><a href="#' + item_anchor(item, i) + '">'
            + e(item['title']) + '</a></li>' for i, item in enumerate(digest['items'], 1)) + '</ol></div></details>') if count else '',
