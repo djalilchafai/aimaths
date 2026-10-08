@@ -790,8 +790,9 @@ button{font:inherit}
 .masthead-inner{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:24px}
 .brand{display:flex;align-items:center;gap:12px;color:var(--ink);text-decoration:none;
  font-size:12px;font-weight:750;letter-spacing:.14em;text-transform:uppercase}
-.brand-mark{height:30px;width:30px;display:inline-grid;place-items:center;
- border:1px solid var(--accent);border-radius:50%;color:var(--accent);font:italic 20px var(--serif)}
+.masthead-brand{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.github-link{font-size:13px;color:var(--muted);text-decoration:none}
+.github-link:hover{color:var(--accent);text-decoration:underline}
 .nav{display:flex;align-items:center;gap:24px;flex-wrap:wrap;font-size:13px}
 .nav a{color:var(--muted);text-decoration:none;padding:8px 0}
 .nav a:hover{color:var(--accent);text-decoration:underline}
@@ -898,7 +899,7 @@ details[open]>summary .toggle-icon::before{content:"−"}
  border-radius:6px;margin:25px 0 0;font-size:13px}
 @media(max-width:640px){
  .shell{padding:0 20px}.masthead-inner{min-height:66px;gap:12px}
- .brand{font-size:10px;letter-spacing:.09em;gap:8px}.brand-mark{width:25px;height:25px;font-size:17px}
+ .brand{font-size:10px;letter-spacing:.09em;gap:8px}.github-link{font-size:11px}
  .nav{gap:14px;font-size:11px}.hero{padding:31px 0 24px}.dek{font-size:14px}
  .edition-meta{margin-top:18px;gap:8px 15px}.overview{padding:17px 19px;margin-bottom:26px}
  .overview p{font-size:14px}.section-header{gap:10px}.section-header h2{font-size:12px}
@@ -1212,7 +1213,8 @@ def browse_page(records, names, demo=False):
              '<title>Browse archive — AI &amp; Maths</title><style>' + PAGE_CSS + '</style></head><body>',
              '<a class="skip-link" href="#main">Skip to archive</a>',
              '<header class="masthead"><div class="shell masthead-inner">',
-             '<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>AI &amp; Maths watch</a>',
+             '<div class="masthead-brand"><a class="brand" href="index.html">AI &amp; Maths watch</a>',
+             '<a class="github-link" href="https://github.com/djalilchafai/aimaths">GitHub</a></div>',
              '<nav class="nav" aria-label="Main navigation"><a href="index.html">Latest edition</a>',
              '<a href="browse.html" aria-current="page">Browse archive</a>',
              '<div class="navbar-search" data-archive-search hidden><label for="archive-search">Search all editions</label>',
@@ -1285,7 +1287,6 @@ def browse_page(records, names, demo=False):
         parts.append('</div></div></section>')
     parts += ['</main><footer class="footer"><p><strong>Automated digest, not independently reviewed.</strong></p>',
               '<p>Only public edition content is indexed here. Search does not query X or any external service.</p>',
-              '<p><a href="https://github.com/djalilchafai/aimaths">GitHub repository</a></p>',
               '<p><a href="index.html">Return to the latest edition</a></p></footer></div>',
               '<script>' + PAGE_JS + '</script></body></html>\n']
     return '\n'.join(parts)
@@ -1321,7 +1322,8 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
         "<style>" + PAGE_CSS + "</style></head><body>",
         '<a class="skip-link" href="#main">Skip to research updates</a>',
         '<header class="masthead"><div class="shell masthead-inner">',
-        '<a class="brand" href="' + home + '"><span class="brand-mark" aria-hidden="true">m</span>AI &amp; Maths watch</a>',
+        '<div class="masthead-brand"><a class="brand" href="' + home + '">AI &amp; Maths watch</a>',
+        '<a class="github-link" href="https://github.com/djalilchafai/aimaths">GitHub</a></div>',
         '<nav class="nav" aria-label="Edition navigation">',
     ]
     if archive:
@@ -1439,7 +1441,6 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
               '<p>Generated on ' + e(stamp) + '. Dates are shown in Europe/Paris time.</p>',
               '<p>Automated checks cover data structure and HTML escaping only; '
               'facts, links and scientific assessments still require verification.</p>',
-              '<p><a href="https://github.com/djalilchafai/aimaths">GitHub repository</a></p>',
               '</footer></div><script type="text/javascript">' + PAGE_JS + '</script></body></html>\n']
     return '\n'.join(parts)
 
