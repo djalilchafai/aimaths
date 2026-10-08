@@ -934,14 +934,19 @@ section[id],details{scroll-margin-top:6rem}
 .toc{margin:0 0 24px}
 .toc ol{padding-left:22px;margin:0}
 .toc li{padding:4px 0}.toc a{text-decoration:none}
-.daily-search{margin:0 0 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.masthead-inner{flex-wrap:wrap;gap:12px;padding-top:12px;padding-bottom:12px}
+.nav{flex-wrap:wrap}
+.daily-search,.navbar-search{margin:0;display:grid;gap:3px;flex:1 1 230px;max-width:320px}
+.daily-search label,.navbar-search label{font-size:11px;font-weight:650}
+.navbar-search input{width:100%;font-size:13px}
+.daily-search[hidden],.navbar-search[hidden]{display:none}
 .daily-search label{font-size:12px;font-weight:650}
 input,select{font:inherit;background:var(--surface);border:1px solid #aebbc4;border-radius:5px;
  color:var(--ink);padding:10px 12px;min-height:42px;max-width:100%;min-width:0}
 input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .daily-search input{flex:1;min-width:min(100%,230px);font-size:13px}
 .daily-search span{font-size:11px;color:var(--muted)}
-.archive-toolbar{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(110px,1fr) minmax(110px,1fr) auto;
+.archive-toolbar{display:grid;grid-template-columns:minmax(110px,1fr) minmax(110px,1fr) auto;
  gap:12px;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px}
 .archive-toolbar label{display:block;font-size:11px;font-weight:700;margin-bottom:7px}
 .archive-toolbar input,.archive-toolbar select{width:100%;font-size:13px}
@@ -972,8 +977,9 @@ input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline
 .archive-titles{list-style:none;padding:0;margin:13px 0 0;display:grid;gap:12px}
 .archive-titles a{text-decoration:none;display:block}.archive-titles span{display:block;font-size:11px;color:var(--muted);margin-top:3px}
 .edition-open{font-size:12px;font-weight:650}
-@media(max-width:720px){.archive-toolbar{grid-template-columns:1fr 1fr}
- .search-field{grid-column:1/-1}.archive-toolbar button{grid-column:1/-1}
+@media(max-width:720px){.nav{width:100%}.daily-search,.navbar-search{max-width:none}
+ .archive-toolbar{grid-template-columns:1fr 1fr}
+ .archive-toolbar button{grid-column:1/-1}
  .month-layout{grid-template-columns:1fr}.calendar-card{max-width:340px}
  .month-calendar td{height:36px}.month-calendar a{line-height:30px}}
 @media(max-width:420px){.nav{gap:10px}.brand{letter-spacing:.04em}
@@ -1054,6 +1060,7 @@ PAGE_JS += r"""
   const tools = document.querySelector('[data-archive-tools]');
   if (!tools) return;
   tools.hidden = false;
+  document.querySelector('[data-archive-search]').hidden = false;
   const query = document.getElementById('archive-search');
   const month = document.getElementById('archive-month');
   const kind = document.getElementById('archive-kind');
@@ -1216,7 +1223,10 @@ def browse_page(records, names, demo=False):
              '<header class="masthead"><div class="shell masthead-inner">',
              '<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">m</span>AI &amp; Maths watch</a>',
              '<nav class="nav" aria-label="Main navigation"><a href="index.html">Latest edition</a>',
-             '<a href="browse.html" aria-current="page">Browse archive</a></nav></div></header>',
+             '<a href="browse.html" aria-current="page">Browse archive</a>',
+             '<div class="navbar-search" data-archive-search hidden><label for="archive-search">Search all editions</label>',
+             '<input id="archive-search" type="search" placeholder="Topic, researcher, source or keyword…" autocomplete="off">',
+             '</div></nav></div></header>',
              '<div class="shell"><section class="hero"><p class="eyebrow">Research library</p>',
              '<h1>Browse the watch</h1><p class="dek">Find an edition, a researcher or a research topic.</p>',
              '<div class="edition-meta"><span>' + str(len(names)) + ' saved editions · ' + str(total)
@@ -1225,9 +1235,7 @@ def browse_page(records, names, demo=False):
         parts.append('<aside class="demo-banner"><strong>FICTIONAL DEMO.</strong> No research was performed. '
                      'Every entry is a layout example, not news.</aside>')
     parts += ['<main id="main"><section class="archive-toolbar" data-archive-tools hidden aria-label="Search saved editions">',
-              '<div class="search-field"><label for="archive-search">Search all editions</label>',
-              '<input id="archive-search" type="search" placeholder="Topic, researcher, source or keyword…" autocomplete="off">',
-              '</div><div class="filter-field"><label for="archive-month">Month</label>',
+              '<div class="filter-field"><label for="archive-month">Month</label>',
               '<select id="archive-month"><option value="">All months</option>']
     for month in months:
         year, number = (int(x) for x in month.split('-'))
@@ -1334,7 +1342,11 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
         if archive_names:
             parts.append(edition_navigation(archive_names, current_archive, archive))
     parts.append('<a href="#coverage">Coverage</a>')
-    parts += ['</nav></div></header><div class="shell">']
+    parts += [
+        ('<div class="daily-search" data-daily-search hidden><label for="daily-search">Find in this edition</label>'
+         + '<input type="search" id="daily-search" placeholder="Topic, researcher or source…">'
+         + '<span role="status" aria-live="polite"></span></div>') if count else '',
+        '</nav></div></header><div class="shell">']
     if demo:
         parts.append('<aside class="demo-banner"><strong>FICTIONAL DEMO.</strong> '
                      'No research was performed. All entries below are layout examples, not news.</aside>')
@@ -1359,9 +1371,6 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
         ('<details class="utility toc"><summary><span>In this edition</span><span class="toggle-icon" aria-hidden="true"></span></summary>'
          + '<div class="utility-body"><ol>' + ''.join('<li><a href="#' + item_anchor(item, i) + '">'
            + e(item['title']) + '</a></li>' for i, item in enumerate(digest['items'], 1)) + '</ol></div></details>') if count else '',
-        ('<div class="daily-search" data-daily-search hidden><label for="daily-search">Find in this edition</label>'
-         + '<input type="search" id="daily-search" placeholder="Topic, researcher or source…">'
-         + '<span role="status" aria-live="polite"></span></div>') if count else '',
         '<section aria-labelledby="updates-heading"><div class="section-header">',
         '<h2 id="updates-heading">Research updates<span class="section-count">'
         + ("Select an entry to read more" if count else "No entries in this edition") + '</span></h2>',
