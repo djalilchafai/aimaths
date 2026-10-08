@@ -6,6 +6,18 @@ and published as HTML by a standalone Python script.
 Requires Python 3.9 or later on a Unix-like system and the Codex CLI for research
 and synthesis. The Python script uses only the standard library.
 
+Before daily or historical synthesis, the script reads configured Bluesky feeds
+through the public API without credentials, including handles in legacy source
+entries. It passes dated posts and collection limitations to Codex. Reads are
+bounded to 10 accounts, 3 pages (300 posts) per account, 10 seconds per request,
+and a 60-second collection budget. Replies, reposts and pinned posts are excluded;
+historical coverage can be incomplete. Failures become coverage gaps and do not
+stop other research. HTML-only rebuilds make no feed requests.
+
+X timelines are not collected directly. Codex uses indexed posts as leads and
+consults official blogs, papers and project sites, reporting missing timeline
+access. No X credentials or paid API integration are configured.
+
 ```sh
 python3 aim-cron.py --help
 python3 aim-cron.py --init --private-dir /path/to/private-data --output-dir /path/to/html
