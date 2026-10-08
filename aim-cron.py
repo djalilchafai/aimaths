@@ -17,7 +17,6 @@ import html
 import ipaddress
 import json
 import logging
-from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
 import re
@@ -254,7 +253,7 @@ def prepare_output_directory(public):
         target.chmod(0o755)
 
 
-def initialize(root, output_dir=None, logs_dir=None):
+def initialize(root, output_dir=None):
     check_private_paths(root)
     codex = shutil.which("codex") or "codex"
     paths = []
@@ -271,8 +270,6 @@ def initialize(root, output_dir=None, logs_dir=None):
     old_config = config.copy()
     if output_dir is not None:
         config["output_dir"] = str(output_dir)
-    if logs_dir is not None:
-        config["logs_dir"] = str(logs_dir)
     logs = logs_directory(root, config)
     config["logs_dir"] = str(logs)
     public = output_directory(root, config)
@@ -329,7 +326,7 @@ def atomic_copy(source, target, mode):
             os.unlink(temporary)
 
 
-def migrate_legacy(root, source, output_dir=None, logs_dir=None):
+def migrate_legacy(root, source, output_dir=None):
     """Import explicite, hors ligne et non destructif, d'une installation antérieure.
 
     Copier les réglages, l'historique et les journaux connus ; importer seulement
@@ -356,8 +353,6 @@ def migrate_legacy(root, source, output_dir=None, logs_dir=None):
     effective = target_config.copy()
     if output_dir is not None:
         effective["output_dir"] = str(output_dir)
-    if logs_dir is not None:
-        effective["logs_dir"] = str(logs_dir)
     logs = logs_directory(root, effective)
     public = output_directory(root, effective)
 
@@ -439,7 +434,7 @@ def migrate_legacy(root, source, output_dir=None, logs_dir=None):
         # complètes, reprises au prochain lancement si elles n'ont pas été modifiées.
         for src, dst, mode in plan:
             atomic_copy(src, dst, mode)
-        result = initialize(root, output_dir=output_dir, logs_dir=logs_dir)
+        result = initialize(root, output_dir=output_dir)
     return result, len(plan)
 
 
@@ -1916,8 +1911,6 @@ def main(argv=None):
     parser.add_argument("--init", action="store_true", help="Initialiser sans appel à Codex")
     parser.add_argument("--output-dir", type=str, required=True,
                         help="Dossier des pages HTML (obligatoire)")
-    parser.add_argument("--logs-dir", type=str, required=True,
-                        help="Dossier privé des journaux (obligatoire)")
     parser.add_argument("--migrate-from", type=Path,
                         help="Avec --init : importer les données d'une ancienne installation sans les supprimer")
     parser.add_argument("--force", action="store_true", help="Relancer même si une édition existe aujourd'hui")
@@ -1965,18 +1958,16 @@ def main(argv=None):
     root = args.root.expanduser().resolve()
     try:
         if args.migrate_from is not None:
-            public, copied = migrate_legacy(root, args.migrate_from, output_dir=args.output_dir, logs_dir=args.logs_dir)
-            print("Migration : %d fichiers copiés ; originaux conservés." % copied)
+            public, copied = migrate_legacy(root, args.migrate_from, output_dir=args.output_dir)
         else:
-            public = initialize(root, output_dir=args.output_dir, logs_dir=args.logs_dir)
+            public = initialize(root, output_dir=args.output_dir)
     except (OSError, ValueError, RuntimeError) as exc:
         print("Initialisation impossible : " + str(exc), file=sys.stderr)
         return 1
-    logs = logs_directory(root, load(root / "config.json"))
-    handler = RotatingFileHandler(logs / "veille.log", maxBytes=2_000_000,
-                                  backupCount=3, encoding="utf-8")
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
-                        handlers=[handler, logging.StreamHandler()], force=True)
+                        handlers=[logging.StreamHandler(sys.stdout)], force=True)
+    if args.migrate_from is not None:
+        logging.info("Migration : %d fichiers copiés ; originaux conservés.", copied)
     if "htdocs" in root.parts:
         logging.warning("Données privées sous htdocs : %s. Un .htaccess 'Require all denied' "
                         "est installé, mais son application par le serveur N'EST PAS vérifiée. "
