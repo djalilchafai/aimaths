@@ -16,6 +16,16 @@ Keep private configuration, state, and logs outside the public HTML directory
 and outside this repository. The script can be run periodically using cron.
 See `--help` for source management, HTML rebuilding, and historical editions.
 
+After changing the webpage interface, use `--force` to rebuild the latest page,
+archive pages, and archive browser from saved editions without calling Codex:
+
+```sh
+python3 aim-cron.py --force --private-dir /path/to/private-data --output-dir /path/to/html
+```
+
+`--render-only` and `--rebuild-html` are aliases. A saved edition is required.
+Previously, `--force` started a new research run; it now only refreshes HTML.
+
 `--private-dir` (alias `--root`) and `--output-dir` are mandatory for every
 run, including initialization and offline actions. `--help` can be used without
 them. The supplied HTML path is saved in the private configuration on each run;

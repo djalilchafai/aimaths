@@ -1864,14 +1864,14 @@ def run_codex(root, config, prompt, work, logbase):
     return load(response)
 
 
-def update(root, force=False):
+def update(root):
     import uuid
     now = datetime.now(PARIS)
     config = load(root / "config.json")
     public = output_directory(root, config)
     state_path = root / "private/latest.json"
     previous = load(state_path) if state_path.exists() else None
-    if (not force and previous and not previous.get("retrospective") and
+    if (previous and not previous.get("retrospective") and
             datetime.fromisoformat(previous["generated_at"]).astimezone(PARIS).date() == now.date()
             and previous.get("language") == OUTPUT_LANGUAGE
             and previous.get("output_dir") == str(public)
@@ -1915,9 +1915,8 @@ def main(argv=None):
                         help="Dossier des pages HTML (obligatoire)")
     parser.add_argument("--migrate-from", type=Path,
                         help="Avec --init : importer les données d'une ancienne installation sans les supprimer")
-    parser.add_argument("--force", action="store_true", help="Relancer même si une édition existe aujourd'hui")
     parser.add_argument("--demo", action="store_true", help="Créer demo.html dans output_dir sans réseau ni appel au modèle")
-    parser.add_argument("--render-only", "--rebuild-html", action="store_true", dest="render_only",
+    parser.add_argument("--force", "--render-only", "--rebuild-html", action="store_true", dest="render_only",
                         help="Refaire le HTML de la dernière édition et des archives JSON, sans appel à Codex")
     parser.add_argument("--bootstrap-month", action="store_true",
                         help="Reconstruire le mois glissant précédent, jour par jour, puis créer l'édition courante ; reprise automatique")
@@ -1937,7 +1936,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     sources_mode = (args.list_sources or args.add_source is not None or args.update_source is not None
                     or args.disable_source is not None or args.enable_source is not None)
-    if sources_mode and (args.init or args.demo or args.force or args.render_only or args.bootstrap_month):
+    if sources_mode and (args.init or args.demo or args.render_only or args.bootstrap_month):
         parser.error("La gestion des sources est une action hors ligne distincte ; ne pas la combiner avec une édition ou --init")
     if any(value is not None for value in (args.source_name, args.source_note, args.source_kind)):
         if args.add_source is None and args.update_source is None:
@@ -1947,13 +1946,13 @@ def main(argv=None):
     if args.update_source is not None and all(value is None for value in
             (args.source_name, args.source_note, args.source_kind, args.source_url)):
         parser.error("--update-source exige au moins un champ à modifier")
-    if args.bootstrap_month and (args.init or args.demo or args.force or args.render_only):
-        parser.error("--bootstrap-month ne se combine pas avec --init, --demo, --force ou --render-only")
+    if args.bootstrap_month and (args.init or args.demo or args.render_only):
+        parser.error("--bootstrap-month ne se combine pas avec --init, --demo ou --force/--render-only")
     if args.max_history_days is not None:
         if not args.bootstrap_month or not 1 <= args.max_history_days <= 31:
             parser.error("--max-history-days exige --bootstrap-month et un entier entre 1 et 31")
-    if args.render_only and (args.init or args.demo or args.force):
-        parser.error("--render-only ne se combine pas avec --init, --demo ou --force")
+    if args.render_only and (args.init or args.demo):
+        parser.error("--render-only ne se combine pas avec --init ou --demo")
     if args.migrate_from is not None and not args.init:
         parser.error("--migrate-from doit être employé avec --init")
     os.umask(0o077)  # Données privées par défaut ; seuls les fichiers HTML sont 0644.
@@ -1998,7 +1997,7 @@ def main(argv=None):
                 if bootstrap_month(root, max_days=args.max_history_days):
                     update(root)
             else:
-                update(root, force=args.force)
+                update(root)
             return 0
         except Exception as exc:
             logging.exception("Échec : %s", exc)
