@@ -1345,9 +1345,11 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
                      + 'Coverage is limited to sources that can be found and checked now.</aside>')
     parts += [
         '<section class="hero" aria-labelledby="page-title">',
-        '<p class="eyebrow">' + ("Retrospective research digest" if retrospective else ("Archived edition" if archive else "Daily research digest")) + '</p>',
+        ('<p class="eyebrow">Retrospective research digest</p>' if retrospective
+         else '<p class="eyebrow">Archived edition</p>' if archive else ''),
         '<h1 id="page-title">AI &amp; Maths</h1>',
-        '<p class="dek">Research, proofs and tools. Sources first, claims in context.</p>',
+        '<p class="dek">Updates on artificial intelligence for mathematical research, '
+        'proof discovery and formal verification, with links to papers, code and tools.</p>',
         '<div class="edition-meta"><time datetime="' + e(generated.isoformat(), quote=True) + '">'
         + e(stamp) + '</time><span>' + str(count) + (' entry' if count == 1 else ' entries')
         + ' · ' + str(source_count) + (' linked source' if source_count == 1 else ' linked sources') + '</span>',
