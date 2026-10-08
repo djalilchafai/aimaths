@@ -926,15 +926,11 @@ html{scroll-padding-top:6rem}
 .skip-link{z-index:20}
 section[id],details{scroll-margin-top:6rem}
 .nav a[aria-current="page"]{color:var(--accent);font-weight:700}
-.edition-pager{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;
- margin:0 0 26px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.edition-pager a,.edition-pager span{font-size:12px;text-decoration:none}
-.edition-pager small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
-.edition-pager .pager-center{text-align:center;font-weight:650;align-self:center}
-.edition-pager>:last-child{text-align:right}
-.edition-pager a:hover{text-decoration:underline}
-.is-disabled{color:var(--muted);opacity:.65}
-.edition-pager:last-child{margin-top:30px}
+.edition-pager{display:inline-flex;align-items:center;gap:8px}
+.nav .edition-pager a,.edition-pager span{display:inline-grid;place-items:center;
+ width:32px;height:36px;padding:0;font-size:20px;text-decoration:none;border-radius:5px}
+.nav .edition-pager a:hover{background:var(--tint);text-decoration:none}
+.is-disabled{color:var(--muted);opacity:.4}
 .toc{margin:0 0 24px}
 .toc ol{padding-left:22px;margin:0}
 .toc li{padding:4px 0}.toc a{text-decoration:none}
@@ -980,8 +976,8 @@ input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline
  .search-field{grid-column:1/-1}.archive-toolbar button{grid-column:1/-1}
  .month-layout{grid-template-columns:1fr}.calendar-card{max-width:340px}
  .month-calendar td{height:36px}.month-calendar a{line-height:30px}}
-@media(max-width:420px){.edition-pager{gap:8px}.edition-pager a,.edition-pager span{font-size:10px}
- .edition-pager small{font-size:9px}.nav{gap:10px}.brand{letter-spacing:.04em}
+@media(max-width:420px){.nav{gap:10px}.brand{letter-spacing:.04em}
+ .masthead-inner{flex-wrap:wrap;padding-top:12px;padding-bottom:12px}.nav{margin-left:auto}
  .archive-toolbar{padding:15px}.archive-toolbar select{padding:9px 8px}}
 @media print{.edition-pager,.daily-search,.archive-toolbar,.month-jumps,.calendar-card{display:none!important}
  .month-layout{display:block}.archive-edition{break-inside:avoid}.masthead{position:static}}
@@ -1143,23 +1139,23 @@ def item_anchor(item, number):
 def edition_navigation(names, current, archive=False, label='Browse editions'):
     """Adjacent saved editions, not invented calendar days. Ordinary HTML links."""
     names = public_archive_names(names)
-    prefix = '../' if archive else ''
     href_prefix = '' if archive else 'archives/'
     index = names.index(current) if current in names else -1
     older = names[index + 1] if index >= 0 and index + 1 < len(names) else None
     newer = names[index - 1] if index > 0 else None
     def neighbor(name, direction, rel, arrow):
         if name is None:
-            return '<span class="pager-link is-disabled" aria-disabled="true">' + direction + '<small>No edition</small></span>'
+            return ('<span class="pager-link is-disabled" aria-disabled="true" aria-label="'
+                    + direction + ' unavailable">' + arrow + '</span>')
         local = archive_time(name).astimezone(PARIS)
-        return ('<a class="pager-link" rel="' + rel + '" href="' + href_prefix + name + '">'
-                + arrow + ' ' + direction + '<small>' + html.escape(english_date(local)) + '</small></a>')
-    month = ('#month-' + archive_time(current).astimezone(PARIS).strftime('%Y-%m')) if current in names else ''
-    return ('<nav class="edition-pager" aria-label="' + html.escape(label, quote=True) + '">'
+        description = direction + ' — ' + english_date(local)
+        return ('<a class="pager-link" rel="' + rel + '" href="' + href_prefix + name
+                + '" aria-label="' + html.escape(description, quote=True)
+                + '" title="' + html.escape(description, quote=True) + '">' + arrow + '</a>')
+    return ('<span class="edition-pager" role="group" aria-label="' + html.escape(label, quote=True) + '">'
             + neighbor(older, 'Earlier edition', 'prev', '←')
-            + '<a class="pager-center" href="' + prefix + 'browse.html' + month + '">'
-              'Browse archive<small>Calendar &amp; search</small></a>'
-            + neighbor(newer, 'Later edition', 'next', '→') + '</nav>')
+            + neighbor(newer, 'Later edition', 'next', '→') + '</span>')
+
 
 
 def archive_search_text(record):
@@ -1332,7 +1328,11 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
     if archive:
         parts.append('<a href="../index.html">Latest edition</a>')
     if not demo:
-        parts.append('<a href="' + ('../' if archive else '') + 'browse.html">Browse archive</a>')
+        month = ('#month-' + archive_time(current_archive).astimezone(PARIS).strftime('%Y-%m')
+                 if current_archive in archive_names else '')
+        parts.append('<a href="' + ('../' if archive else '') + 'browse.html' + month + '">Calendar</a>')
+        if archive_names:
+            parts.append(edition_navigation(archive_names, current_archive, archive))
     parts.append('<a href="#coverage">Coverage</a>')
     parts += ['</nav></div></header><div class="shell">']
     if demo:
@@ -1354,7 +1354,6 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
         + ' · ' + str(source_count) + (' linked source' if source_count == 1 else ' linked sources') + '</span>',
         '<span class="status status-' + e(digest["status"], quote=True) + '">' + e(status_label) + '</span>',
         '</div></section>',
-        edition_navigation(archive_names, current_archive, archive) if archive_names and not demo else '',
         '<main id="main"><section class="overview" aria-labelledby="overview-heading">',
         '<h2 id="overview-heading">At a glance</h2><p>' + e(digest["summary"]) + '</p></section>',
         ('<details class="utility toc"><summary><span>In this edition</span><span class="toggle-icon" aria-hidden="true"></span></summary>'
@@ -1438,8 +1437,6 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
                          + '</span><small>' + e(detail) + '</small></a></li>')
         parts.append('</ul>' + ('</details>' if len(archive_names) > 30 else '') + '</div></details>')
     parts += ['</div>',
-              edition_navigation(archive_names, current_archive, archive, label='Browse editions at end of page')
-              if archive_names and not demo else '',
               '</main><footer class="footer">',
               '<p><strong>Automated digest, not independently reviewed. Proofs are not certified.</strong></p>',
               '<p>Generated on ' + e(stamp) + '. Dates are shown in Europe/Paris time.</p>',
