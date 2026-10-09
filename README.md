@@ -14,9 +14,9 @@ and a 60-second collection budget. Replies, reposts and pinned posts are exclude
 historical coverage can be incomplete. Failures become coverage gaps and do not
 stop other research. HTML-only rebuilds make no feed requests.
 
-X timelines are not collected directly. Codex uses indexed posts as leads and
-consults official blogs, papers and project sites, reporting missing timeline
-access. No X credentials or paid API integration are configured.
+X collection is optional and uses the official paid API, not browser automation.
+Without a credential parameter, X handles remain search leads and timeline access
+is reported as unavailable. Normal X Premium subscriptions are not required.
 
 ```sh
 python3 aim-cron.py --help
@@ -58,3 +58,72 @@ overlap the public HTML directory.
 For a daily cron run, adapt the paths in [crontab.example](crontab.example),
 initialize the directories once, then paste its cron entry into `crontab -e`.
 The schedule uses the cron daemon's local timezone.
+
+## Optional Twitter/X API coverage
+
+Create an app in the [X Developer Console](https://console.x.com/) and obtain its
+Bearer Token. API access uses prepaid credits. Set a **$5 spending limit** in the
+console; this is the authoritative account-wide billing safeguard.
+See [access instructions](https://docs.x.com/x-api/getting-started/getting-access)
+and [pricing](https://docs.x.com/x-api/getting-started/pricing).
+
+Create a JSON file **outside this repository and the public HTML directory**:
+
+```json
+{
+  "bearer_token": "YOUR_X_API_BEARER_TOKEN"
+}
+```
+
+The file must belong to the current user, be a regular file (not a symlink), and
+have no group/other permissions. Do not put your Gmail password in it. Protect it:
+
+```sh
+chmod 600 /path/to/private-data/twitter.json
+```
+
+Enable collection on each research run, including in your cron command:
+
+```sh
+python3 aim-cron.py --private-dir /path/to/private-data --output-dir /path/to/html \
+  --twitter-credentials /path/to/private-data/twitter.json \
+  --twitter-monthly-budget 500 --twitter-max-posts 30
+```
+
+`--twitter-monthly-budget` is in **USD cents**: `500` means $5, `200` means $2.
+The default is 500. `--twitter-max-posts` defaults to 30 reads per research window,
+shared across accounts. These parameters are not saved in configuration; repeat
+them on each run. Omitting `--twitter-credentials` disables all X requests.
+Initialization, source management, demos and HTML-only rebuilding make no X calls.
+
+Enabled X sources, including legacy `Name — X : @handle` entries, are collected.
+User IDs and dated posts are cached privately in `private/twitter-state.json`.
+Fully collected intervals are reused, so overlapping daily windows do not reread
+those posts. Replies and reposts are excluded. Requests use five-post pages,
+at most three pages per account and a 60-second collection budget. Account priority
+rotates when the run budget prevents all accounts being checked. Busy accounts,
+pagination caps and skipped accounts are explicitly reported as coverage gaps.
+Partial intervals may be fetched again; the cache does not claim completeness.
+Retained evidence covers at most 40 days / 1,500 posts per account. Historical runs
+also consume the shared budget, and old timelines may not be available.
+
+The local ledger estimates $0.005 per post and $0.010 per user lookup. It reserves
+maximum request cost **before** each request and refunds unused reservations only
+after a valid response. Ambiguous failures keep their reservation; this can stop
+collection earlier than actual billing. There are no automatic retries. HTTP
+401/402/403/429 stops further X collection in that window; other research continues.
+Token values and upstream error bodies are never passed to Codex or logged.
+
+The ledger resets at the start of each **UTC calendar month**, which can differ
+from X's billing cycle. It tracks this installation only, not other apps or users,
+and prices may change. Keep the console spending limit enabled, and do not delete
+the state file to resume collection: deleting it loses budget accounting.
+At current prices $5 buys roughly 1,000 post reads before user lookup costs;
+30 reads/day leaves some room for lookups in a 31-day month. This bounds costs,
+but does not guarantee full coverage of all configured accounts.
+
+Run the offline collector checks with:
+
+```sh
+python3 -m unittest discover -s tests -v
+```
