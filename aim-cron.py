@@ -1913,6 +1913,13 @@ def same_day_editions(root, now):
     return records
 
 
+def refresh_summary(items, status):
+    summary = 'Today’s research: ' + '; '.join(item['title'].rstrip('. ') for item in items) + '.'
+    if status == 'partial':
+        summary += ' Coverage remains incomplete; see the source notes below.'
+    return summary
+
+
 def merge_refresh(digest, editions):
     """Keep saved news when a refresh only finds incremental news or coverage gaps."""
     saved = []
@@ -1935,8 +1942,7 @@ def merge_refresh(digest, editions):
     if retained:
         digest = dict(digest, items=items,
                       status='partial' if digest['status'] == 'partial' else 'ok',
-                      summary="Today's edition retains saved research entries alongside the latest refresh. "
-                              + digest['summary'],
+                      summary=refresh_summary(items, digest['status']),
                       coverage=list(digest['coverage']) + [
                           str(retained) + ' entries retained from earlier editions today; '
                           'their sources were consulted in those editions, not necessarily during this refresh.'])

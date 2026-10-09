@@ -25,6 +25,10 @@ class RefreshTests(unittest.TestCase):
         result = aim.merge_refresh(empty, [self.record, dict(self.record, digest=empty)])
         self.assertEqual(result['items'], self.digest['items'])
         self.assertEqual(result['status'], 'partial')
+        for item in result['items']:
+            self.assertIn(item['title'], result['summary'])
+        self.assertNotIn('Coverage unavailable', result['summary'])
+        self.assertIn('Coverage remains incomplete', result['summary'])
         aim.validate_digest(result, self.now.date())
         self.assertEqual(empty['items'], [])
 
@@ -40,6 +44,7 @@ class RefreshTests(unittest.TestCase):
         result = aim.merge_refresh(dict(status='no_news', summary='No new findings',
                                         coverage=['Web searched'], items=[]), [self.record])
         self.assertEqual(result['status'], 'ok')
+        self.assertNotIn('No new findings', result['summary'])
         aim.validate_digest(result, self.now.date())
 
     def test_full_window_and_today_not_excluded(self):
