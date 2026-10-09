@@ -40,8 +40,11 @@ python3 aim-cron.py --render-only --private-dir /path/to/private-data --output-d
 Ordinary runs skip research when today's edition already exists, including an
 edition with partial coverage. Adding Twitter credentials does not bypass this
 daily limit. Use `--force` (alias `--refresh`) to recreate today's page with fresh
-research, retaining previous
-editions and the normal Twitter budget checks:
+research over the original coverage window. Earlier entries from today remain
+eligible for inclusion; saved entries are retained when the refresh finds no
+replacement, up to the six-entry edition limit. Matching titles or source URLs
+allow fresh entries to replace older ones, including corrections. Earlier
+editions remain archived, with the normal Twitter budget checks:
 
 ```sh
 python3 aim-cron.py --force --private-dir /path/to/private-data --output-dir /path/to/html

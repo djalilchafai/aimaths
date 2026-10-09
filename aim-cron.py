@@ -1902,7 +1902,48 @@ def render_saved(root, latest_override=None):
     return len(records)
 
 
-def build_prompt(root, now, previous):
+def same_day_editions(root, now):
+    records = []
+    for path in sorted((root / 'private').glob('edition-*.json')):
+        record = load(path)
+        if (not record.get('retrospective') and
+                datetime.fromisoformat(record['generated_at']).astimezone(PARIS).date() == now.date()):
+            validate_record(record)
+            records.append(record)
+    return records
+
+
+def merge_refresh(digest, editions):
+    """Keep saved news when a refresh only finds incremental news or coverage gaps."""
+    saved = []
+    for record in editions:
+        for item in record['digest']['items']:
+            urls = {s['url'] for s in item['sources']}
+            saved = [old for old in saved if old['title'] != item['title'] and
+                     not urls.intersection(s['url'] for s in old['sources'])]
+            saved.append(item)
+    items = list(digest['items'])
+    retained = 0
+    for item in saved:
+        urls = {s['url'] for s in item['sources']}
+        if any(item['title'] == new['title'] or
+               urls.intersection(s['url'] for s in new['sources']) for new in items):
+            continue
+        if len(items) < 6:
+            items.append(item)
+            retained += 1
+    if retained:
+        digest = dict(digest, items=items,
+                      status='partial' if digest['status'] == 'partial' else 'ok',
+                      summary="Today's edition retains saved research entries alongside the latest refresh. "
+                              + digest['summary'],
+                      coverage=list(digest['coverage']) + [
+                          str(retained) + ' entries retained from earlier editions today; '
+                          'their sources were consulted in those editions, not necessarily during this refresh.'])
+    return digest
+
+
+def build_prompt(root, now, previous, refresh=False):
     sources = source_prompt_entries(root)
     last = datetime.fromisoformat(previous.get("window_end", previous["generated_at"])) if previous else now - timedelta(days=1)
     # Recouvrement et rattrapage global borné, pas de curseur exhaustif par compte X.
@@ -1910,10 +1951,15 @@ def build_prompt(root, now, previous):
         raise ValueError("État précédent : date incohérente")
     requested_start = last - timedelta(hours=12)
     start = max(requested_start, now - timedelta(days=7))
+    editions = same_day_editions(root, now) if refresh else []
+    if editions:
+        start = min(start, *(datetime.fromisoformat(r['window_start']) for r in editions))
     recent = []
     files = sorted((root / "private").glob("edition-*.json"))[-14:]
     for path in files:
         edition = load(path)
+        if refresh and edition in editions:
+            continue
         for item in edition["digest"]["items"]:
             recent.append({"title": item["title"], "date": item["published_date"],
                            "urls": [s["url"] for s in item["sources"]]})
@@ -1923,6 +1969,12 @@ def build_prompt(root, now, previous):
                "direct_social_feeds": collect_bluesky(root, start, now),
                "direct_x_feeds": collect_twitter(root, start, now),
                "output_language": "English (en)"}
+    if refresh:
+        context['refresh_instructions'] = (
+            'Rebuild the complete edition for today over the full requested window. '
+            'Earlier entries today are not duplicates to exclude. Recheck them, include '
+            'substantive corrections in replacement entries, and add new findings.')
+        context['earlier_editions_today'] = [r['digest'] for r in editions]
     prompt = (root / "prompt.md").read_text(encoding="utf-8")
     language_instruction = ("\n\nMANDATORY OUTPUT LANGUAGE: English (en). This overrides any "
                             "conflicting language preference in the editorial notes above. "
@@ -2219,7 +2271,7 @@ def update(root, refresh=False):
         logging.info("Une édition valide existe déjà aujourd'hui ; aucun appel à Codex. "
                      "Utiliser --force pour relancer la recherche")
         return
-    prompt, start = build_prompt(root, now, previous)
+    prompt, start = build_prompt(root, now, previous, refresh=refresh)
     stem = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
     logbase = logs_directory(root, config) / stem
     with tempfile.TemporaryDirectory(prefix="run-", dir=root / "private") as temporary:
@@ -2227,6 +2279,9 @@ def update(root, refresh=False):
     validate_digest(digest, now.date())
     if digest["status"] == "failed":
         raise RuntimeError("Recherche inexploitable : " + digest["summary"])
+    if refresh:
+        digest = merge_refresh(digest, same_day_editions(root, now))
+        validate_digest(digest, now.date())
     # Pas de suppression mécanique : les corrections peuvent reprendre les mêmes URL.
     archive_name = stem + ".html"
     record = {"generated_at": now.isoformat(), "window_start": start.isoformat(),
