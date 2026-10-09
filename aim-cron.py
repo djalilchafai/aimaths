@@ -626,7 +626,7 @@ class NoTwitterRedirect(HTTPRedirectHandler):
         return None
 
 
-def twitter_credentials(path):
+def twitter_credentials(path, plain_text=False):
     """Read a private token without exposing its contents in exceptions."""
     try:
         if path.is_symlink():
@@ -639,13 +639,13 @@ def twitter_credentials(path):
             raw = stream.read(16385)
         if len(raw) > 16384:
             raise ValueError()
-        data = json.loads(raw)
-        token = data['bearer_token']
+        token = raw.decode('utf-8').strip() if plain_text else json.loads(raw)['bearer_token']
         if not isinstance(token, str) or not re.fullmatch(r'[A-Za-z0-9%._~+/=-]{1,8192}', token):
             raise ValueError()
         return token
     except Exception:
-        raise ValueError('Twitter credentials: use an owned, regular 0600 JSON file with bearer_token') from None
+        format_hint = 'text file containing only the bearer token' if plain_text else 'JSON file with bearer_token'
+        raise ValueError('Twitter credentials: use an owned, regular 0600 ' + format_hint) from None
 
 
 def collect_twitter(root, start, end):
@@ -664,7 +664,7 @@ def collect_twitter(root, start, end):
     credentials = TWITTER_OPTIONS['credentials']
     if not credentials or not handles:
         return list(results.values())
-    token = twitter_credentials(credentials)
+    token = twitter_credentials(credentials, TWITTER_OPTIONS.get('plain_text', False))
     state_path = root / 'private/twitter-state.json'
     if state_path.is_symlink():
         raise ValueError('Twitter state must not be a symlink')
@@ -2273,7 +2273,10 @@ def main(argv=None):
     parser.add_argument("--source-note", help="Avec --add-source ou --update-source : instructions de sélection ; chaîne vide pour effacer")
     parser.add_argument("--source-kind", choices=SOURCE_KINDS, help="Type de source ; détection automatique par défaut")
     parser.add_argument("--source-url", help="Avec --update-source : nouvelle URL ou nouvel identifiant")
-    parser.add_argument('--twitter-credentials', type=Path,
+    twitter_auth = parser.add_mutually_exclusive_group()
+    twitter_auth.add_argument('--twitter-token-file', type=Path,
+                              help='Private 0600 text file containing only the X Bearer Token')
+    twitter_auth.add_argument('--twitter-credentials', type=Path,
                         help='Private 0600 JSON file containing bearer_token; enables X API collection')
     parser.add_argument('--twitter-monthly-budget', type=int, default=500, metavar='CENTS',
                         help='Local UTC calendar-month budget in USD cents (default: 500 = $5)')
@@ -2282,8 +2285,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not 0 <= args.twitter_monthly_budget <= 100000 or not 5 <= args.twitter_max_posts <= 1000:
         parser.error('Twitter budget must be 0..100000 cents and max-posts 5..1000')
-    TWITTER_OPTIONS.update(credentials=args.twitter_credentials.expanduser().absolute()
-                           if args.twitter_credentials else None,
+    credential_file = args.twitter_token_file or args.twitter_credentials
+    TWITTER_OPTIONS.update(credentials=credential_file.expanduser().absolute()
+                           if credential_file else None, plain_text=args.twitter_token_file is not None,
                            budget_cents=args.twitter_monthly_budget, max_posts=args.twitter_max_posts)
     sources_mode = (args.list_sources or args.add_source is not None or args.update_source is not None
                     or args.disable_source is not None or args.enable_source is not None)
@@ -2353,12 +2357,12 @@ def main(argv=None):
                 render_saved(root)
             elif args.bootstrap_month:
                 if TWITTER_OPTIONS['credentials']:
-                    twitter_credentials(TWITTER_OPTIONS['credentials'])
+                    twitter_credentials(TWITTER_OPTIONS['credentials'], TWITTER_OPTIONS.get('plain_text', False))
                 if bootstrap_month(root, max_days=args.max_history_days):
                     update(root)
             else:
                 if TWITTER_OPTIONS['credentials']:
-                    twitter_credentials(TWITTER_OPTIONS['credentials'])
+                    twitter_credentials(TWITTER_OPTIONS['credentials'], TWITTER_OPTIONS.get('plain_text', False))
                 update(root)
             return 0
         except Exception as exc:

@@ -36,7 +36,7 @@ class TwitterTests(unittest.TestCase):
         self.credentials.write_text('{"bearer_token":"FAKE_SECRET"}')
         self.credentials.chmod(0o600)
         self.options = patch.dict(aim.TWITTER_OPTIONS, credentials=self.credentials,
-                                  budget_cents=500, max_posts=30)
+                                  budget_cents=500, max_posts=30, plain_text=False)
         self.options.start()
         self.addCleanup(self.options.stop)
         self.end = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(seconds=1)
@@ -145,6 +145,19 @@ class TwitterTests(unittest.TestCase):
         result = self.fetch(iter([{'data': [], 'meta': {}}]))
         self.assertEqual(result[0]['posts'], [])
         self.assertEqual(len(self.calls), 3)
+
+    def test_plain_token_file_collection_and_invalid_multiline_token(self):
+        self.credentials.write_text('  FAKE_SECRET\n')
+        aim.TWITTER_OPTIONS['plain_text'] = True
+        result = self.fetch(iter([self.user(), {'data': [], 'meta': {}}]))
+        self.assertEqual(result[0]['status'], 'ok')
+        self.credentials.write_text('FAKE_SECRET\nSECOND_LINE')
+        with self.assertRaisesRegex(ValueError, 'text file'):
+            aim.twitter_credentials(self.credentials, plain_text=True)
+        self.credentials.write_text('FAKE_SECRET')
+        self.credentials.chmod(0o644)
+        with self.assertRaisesRegex(ValueError, '0600'):
+            aim.twitter_credentials(self.credentials, plain_text=True)
 
     def test_redirects_never_forward_token(self):
         self.assertIsNone(aim.NoTwitterRedirect().redirect_request(

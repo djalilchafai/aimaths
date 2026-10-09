@@ -67,7 +67,33 @@ console; this is the authoritative account-wide billing safeguard.
 See [access instructions](https://docs.x.com/x-api/getting-started/getting-access)
 and [pricing](https://docs.x.com/x-api/getting-started/pricing).
 
-Create a JSON file **outside this repository and the public HTML directory**:
+Create a private text file, for example `/path/to/private-data/twitter.token`,
+containing **only the Bearer Token** copied from your app's **Keys and tokens**
+section. A trailing newline is fine. Keep the file **outside this repository and
+the public HTML directory**. Do not put your Gmail password in it.
+
+The file must belong to the current user, be a regular file (not a symlink), and
+have no group/other permissions:
+
+```sh
+chmod 600 /path/to/private-data/twitter.token
+```
+
+Enable collection on each research run, including in your cron command:
+
+```sh
+python3 aim-cron.py --private-dir /path/to/private-data --output-dir /path/to/html \
+  --twitter-token-file /path/to/private-data/twitter.token \
+  --twitter-monthly-budget 500 --twitter-max-posts 30
+```
+
+`--twitter-monthly-budget` is in **USD cents**: `500` means $5, `200` means $2.
+The default is 500. `--twitter-max-posts` defaults to 30 reads per research window,
+shared across accounts. These parameters are not saved in configuration; repeat
+them on each run. Omitting both credential options disables all X requests.
+
+The previous JSON format remains supported with
+`--twitter-credentials /path/to/private-data/twitter.json`:
 
 ```json
 {
@@ -75,25 +101,8 @@ Create a JSON file **outside this repository and the public HTML directory**:
 }
 ```
 
-The file must belong to the current user, be a regular file (not a symlink), and
-have no group/other permissions. Do not put your Gmail password in it. Protect it:
-
-```sh
-chmod 600 /path/to/private-data/twitter.json
-```
-
-Enable collection on each research run, including in your cron command:
-
-```sh
-python3 aim-cron.py --private-dir /path/to/private-data --output-dir /path/to/html \
-  --twitter-credentials /path/to/private-data/twitter.json \
-  --twitter-monthly-budget 500 --twitter-max-posts 30
-```
-
-`--twitter-monthly-budget` is in **USD cents**: `500` means $5, `200` means $2.
-The default is 500. `--twitter-max-posts` defaults to 30 reads per research window,
-shared across accounts. These parameters are not saved in configuration; repeat
-them on each run. Omitting `--twitter-credentials` disables all X requests.
+Use one credential option at a time. Both formats have the same privacy and file
+permission requirements. The token itself is never a command-line argument.
 Initialization, source management, demos and HTML-only rebuilding make no X calls.
 
 Enabled X sources, including legacy `Name — X : @handle` entries, are collected.

@@ -13,5 +13,5 @@ PATH=/usr/local/bin:/usr/bin:/bin
 0 7 * * * /usr/bin/python3 /absolute/path/aimaths/aim-cron.py --private-dir /absolute/path/aim-private --output-dir /absolute/path/aim-html >> /absolute/path/aim-private/cron.log 2>&1
 
 # Optional X API coverage: append these flags before the log redirection above:
-# --twitter-credentials /absolute/path/aim-private/twitter.json --twitter-monthly-budget 500 --twitter-max-posts 30
-# Protect twitter.json with chmod 600 and set the account spending limit in X's console.
+# --twitter-token-file /absolute/path/aim-private/twitter.token --twitter-monthly-budget 500 --twitter-max-posts 30
+# Protect twitter.token with chmod 600 and set the account spending limit in X's console.
