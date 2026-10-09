@@ -28,15 +28,27 @@ Keep private configuration, state, and logs outside the public HTML directory
 and outside this repository. The script can be run periodically using cron.
 See `--help` for source management, HTML rebuilding, and historical editions.
 
-After changing the webpage interface, use `--force` to rebuild the latest page,
+After changing the webpage interface, use `--render-only` to rebuild the latest page,
 archive pages, and archive browser from saved editions without calling Codex:
+
+```sh
+python3 aim-cron.py --render-only --private-dir /path/to/private-data --output-dir /path/to/html
+```
+
+`--render-only` and `--rebuild-html` are aliases. A saved edition is required.
+
+Ordinary runs skip research when today's edition already exists, including an
+edition with partial coverage. Adding Twitter credentials does not bypass this
+daily limit. Use `--force` (alias `--refresh`) to recreate today's page with fresh
+research, retaining previous
+editions and the normal Twitter budget checks:
 
 ```sh
 python3 aim-cron.py --force --private-dir /path/to/private-data --output-dir /path/to/html
 ```
 
-`--render-only` and `--rebuild-html` are aliases. A saved edition is required.
-Previously, `--force` started a new research run; it now only refreshes HTML.
+Include your usual Twitter options when refreshing with X coverage. Refreshing
+calls Codex and may use paid API reads; keep it out of the normal daily cron entry.
 
 `--private-dir` (alias `--root`) and `--output-dir` are mandatory for every
 run, including initialization and offline actions. `--help` can be used without

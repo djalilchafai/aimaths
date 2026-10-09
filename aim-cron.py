@@ -2204,19 +2204,20 @@ def run_codex(root, config, prompt, work, logbase):
     return load(response)
 
 
-def update(root):
+def update(root, refresh=False):
     import uuid
     now = datetime.now(PARIS)
     config = load(root / "config.json")
     public = output_directory(root, config)
     state_path = root / "private/latest.json"
     previous = load(state_path) if state_path.exists() else None
-    if (previous and not previous.get("retrospective") and
+    if (not refresh and previous and not previous.get("retrospective") and
             datetime.fromisoformat(previous["generated_at"]).astimezone(PARIS).date() == now.date()
             and previous.get("language") == OUTPUT_LANGUAGE
             and previous.get("output_dir") == str(public)
             and (public / "index.html").exists()):
-        logging.info("Une édition valide existe déjà aujourd'hui ; aucun appel à Codex")
+        logging.info("Une édition valide existe déjà aujourd'hui ; aucun appel à Codex. "
+                     "Utiliser --force pour relancer la recherche")
         return
     prompt, start = build_prompt(root, now, previous)
     stem = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
@@ -2256,8 +2257,10 @@ def main(argv=None):
     parser.add_argument("--migrate-from", type=Path,
                         help="Avec --init : importer les données d'une ancienne installation sans les supprimer")
     parser.add_argument("--demo", action="store_true", help="Créer demo.html dans output_dir sans réseau ni appel au modèle")
-    parser.add_argument("--force", "--render-only", "--rebuild-html", action="store_true", dest="render_only",
+    parser.add_argument("--render-only", "--rebuild-html", action="store_true", dest="render_only",
                         help="Refaire le HTML de la dernière édition et des archives JSON, sans appel à Codex")
+    parser.add_argument("--force", "--refresh", action="store_true", dest="refresh",
+                        help="Relancer la recherche Codex même si une édition existe aujourd'hui (appels API possibles)")
     parser.add_argument("--bootstrap-month", action="store_true",
                         help="Reconstruire le mois glissant précédent, jour par jour, puis créer l'édition courante ; reprise automatique")
     parser.add_argument("--max-history-days", type=int,
@@ -2291,6 +2294,8 @@ def main(argv=None):
                            budget_cents=args.twitter_monthly_budget, max_posts=args.twitter_max_posts)
     sources_mode = (args.list_sources or args.add_source is not None or args.update_source is not None
                     or args.disable_source is not None or args.enable_source is not None)
+    if args.refresh and (args.init or args.demo or args.render_only or args.bootstrap_month or sources_mode):
+        parser.error("--force/--refresh est une recherche distincte ; ne pas combiner avec une autre action")
     if sources_mode and (args.init or args.demo or args.render_only or args.bootstrap_month):
         parser.error("La gestion des sources est une action hors ligne distincte ; ne pas la combiner avec une édition ou --init")
     if any(value is not None for value in (args.source_name, args.source_note, args.source_kind)):
@@ -2302,7 +2307,7 @@ def main(argv=None):
             (args.source_name, args.source_note, args.source_kind, args.source_url)):
         parser.error("--update-source exige au moins un champ à modifier")
     if args.bootstrap_month and (args.init or args.demo or args.render_only):
-        parser.error("--bootstrap-month ne se combine pas avec --init, --demo ou --force/--render-only")
+        parser.error("--bootstrap-month ne se combine pas avec --init, --demo ou --render-only")
     if args.max_history_days is not None:
         if not args.bootstrap_month or not 1 <= args.max_history_days <= 31:
             parser.error("--max-history-days exige --bootstrap-month et un entier entre 1 et 31")
@@ -2363,7 +2368,7 @@ def main(argv=None):
             else:
                 if TWITTER_OPTIONS['credentials']:
                     twitter_credentials(TWITTER_OPTIONS['credentials'], TWITTER_OPTIONS.get('plain_text', False))
-                update(root)
+                update(root, refresh=args.refresh)
             return 0
         except Exception as exc:
             logging.exception("Échec : %s", exc)
