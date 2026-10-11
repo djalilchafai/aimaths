@@ -82,6 +82,21 @@ class TwitterTests(unittest.TestCase):
         self.assertEqual(result[0]['status'], 'ok')
         self.assertNotIn('FAKE_SECRET', json.dumps(result) + json.dumps(self.state()))
 
+    def test_fractional_window_uses_valid_api_dates_and_exact_cache_range(self):
+        self.start = self.start.replace(microsecond=240844)
+        self.end = self.end.replace(microsecond=640084)
+        before = self.post('455')
+        before['created_at'] = self.start.replace(microsecond=0).isoformat()
+        after = self.post('457')
+        after['created_at'] = (self.end + timedelta(microseconds=1)).isoformat()
+        result = self.fetch(iter([self.user(), {'data': [before, self.post(), after], 'meta': {}}]))
+        params = parse_qs(urlsplit(self.calls[-1].full_url).query)
+        self.assertEqual(params['start_time'], [self.start.replace(microsecond=0).isoformat().replace('+00:00', 'Z')])
+        self.assertEqual(params['end_time'], [(self.end.replace(microsecond=0) + timedelta(seconds=1)).isoformat().replace('+00:00', 'Z')])
+        self.assertEqual([p['url'].rsplit('/', 1)[-1] for p in result[0]['posts']], ['456'])
+        self.assertEqual(self.state()['accounts']['alice']['ranges'], [[self.start.isoformat(), self.end.isoformat()]])
+        self.assertEqual(self.fetch(iter([]))[0]['status'], 'ok')
+
     def test_budget_reserves_before_request_and_refuses_overrun(self):
         aim.TWITTER_OPTIONS['budget_cents'] = 3  # Cannot fund lookup + minimum page.
         result = self.fetch(iter([]))

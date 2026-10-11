@@ -770,9 +770,16 @@ def collect_twitter(root, start, end):
                 if remaining_posts < 5:
                     break
                 # Small pages give more accounts a chance under a small budget.
+                # X rejects Python's six-digit fractional seconds. Round the
+                # API window outward; filter returned posts to the exact window
+                # below so rounding neither loses evidence nor adds coverage.
+                api_start = fetch_start.astimezone(timezone.utc).replace(microsecond=0)
+                api_end = end.astimezone(timezone.utc)
+                if api_end.microsecond:
+                    api_end = api_end.replace(microsecond=0) + timedelta(seconds=1)
                 params = {'max_results': 5, 'exclude': 'replies,retweets',
-                          'start_time': fetch_start.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z'),
-                          'end_time': end.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z'),
+                          'start_time': api_start.isoformat().replace('+00:00', 'Z'),
+                          'end_time': api_end.isoformat().replace('+00:00', 'Z'),
                           'post.fields': 'created_at,text,entities,note_post'}
                 if cursor:
                     params['pagination_token'] = cursor
