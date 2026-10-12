@@ -62,6 +62,7 @@ SOURCES = [
     "Epoch AI — X : @EpochAIResearch",
     "Terence Tao — blog What's New https://terrytao.wordpress.com/ ; Mathstodon @tao@mathstodon.xyz",
     "Kevin Buzzard — blog Xena (retrouver l'adresse officielle) ; Bluesky @xenaproject.bsky.social",
+    "Simon Frieder — blog https://www.friederrrr.org/blog",
 ]
 PROMPT = """Prepare an English-language research digest for a research mathematician.
 Prioritize AI for mathematical research: results, proofs, counterexamples, Lean and
