@@ -60,6 +60,7 @@ SOURCES = [
     "Harmonic — X : @HarmonicMath",
     "Axiom — X : @axiommathai",
     "Epoch AI — X : @EpochAIResearch",
+    "Mistral AI — X : @MistralAI ; official website https://mistral.ai/",
     "Terence Tao — blog What's New https://terrytao.wordpress.com/ ; Mathstodon @tao@mathstodon.xyz",
     "Kevin Buzzard — blog Xena (retrouver l'adresse officielle) ; Bluesky @xenaproject.bsky.social",
     "Simon Frieder — blog https://www.friederrrr.org/blog",
