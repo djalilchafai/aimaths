@@ -75,6 +75,10 @@ SOURCES = [
     "Terence Tao — blog What's New https://terrytao.wordpress.com/ ; Mathstodon @tao@mathstodon.xyz",
     "Kevin Buzzard — blog Xena (retrouver l'adresse officielle) ; Bluesky @xenaproject.bsky.social",
     "Simon Frieder — blog https://www.friederrrr.org/blog",
+    "Quanta Magazine — https://www.quantamagazine.org/ ; follow Transformation, the weekly dispatch on mathematics and AI, and related research reporting",
+    "Nature — mathematics news https://www.nature.com/subjects/mathematics ; focus on AI for mathematical research and developments in the mathematical community",
+    "South China Morning Post — China science https://www.scmp.com/news/china/science ; focus on AI for mathematics, research alliances and institutional initiatives; verify announcements against primary sources",
+    "The Chosun Daily — English industry news https://www.chosun.com/english/industry-en/ ; focus on AI for mathematical research and research institutions in Asia; trace repeated reporting to its original source",
 ]
 PROMPT = """Prepare an English-language research digest for a research mathematician.
 Prioritize AI for mathematical research: results, proofs, counterexamples, Lean and

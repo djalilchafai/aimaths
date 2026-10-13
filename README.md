@@ -28,6 +28,14 @@ Keep private configuration, state, and logs outside the public HTML directory
 and outside this repository. The script can be run periodically using cron.
 See `--help` for source management, HTML rebuilding, and historical editions.
 
+Default research sources include Quanta Magazine (including its Transformation
+dispatch on mathematics and AI), Nature's mathematics news, SCMP's China science
+coverage, and The Chosun Daily's English industry coverage. Selection focuses on
+AI for mathematical research, including research alliances and institutional
+initiatives, with announcements checked against primary sources.
+These defaults apply to newly initialized installations; existing `sources.json`
+files are preserved. Use `--add-source` to add these outlets to an existing installation.
+
 After changing the webpage interface, use `--render-only` to rebuild the latest page,
 archive pages, and archive browser from saved editions without calling Codex:
 
