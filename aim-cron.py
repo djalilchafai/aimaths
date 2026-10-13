@@ -1143,16 +1143,10 @@ h1{font:normal clamp(2.5rem,5vw,3.9rem)/1.1 var(--serif);letter-spacing:-.04em;m
  border:1px solid #bfd5ce;color:#225c50;background:var(--tint);border-radius:30px;padding:4px 10px}
 .status::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
 .status-partial,.status-failed{background:#fff4e7;border-color:#e8ccb0;color:#865015}
-.overview{margin:0 0 32px;padding:21px 26px;background:var(--surface);
- border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 8px 8px 0}
-.overview p{margin:0;font-size:16px;line-height:1.8;white-space:pre-line;overflow-wrap:anywhere}
-.overview h2{font:700 10px var(--sans);letter-spacing:.16em;text-transform:uppercase;
- color:var(--accent);margin:0 0 9px;display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px}
-.overview h2 .edition-meta{margin:0;font-weight:400;letter-spacing:normal;text-transform:none;
- gap:10px 16px}
 .section-header{display:flex;justify-content:space-between;align-items:center;gap:16px;
  flex-wrap:wrap;margin:0 0 14px}
 .section-header h2{margin:0;font-size:13px;font-weight:700;letter-spacing:.025em}
+.section-header .edition-meta{margin:0;flex:1}
 .section-count{color:var(--muted);font-weight:400;margin-left:8px}
 .controls{display:flex;gap:8px}
 .controls button{border:1px solid var(--line);background:var(--surface);color:var(--muted);
@@ -1237,8 +1231,8 @@ details[open]>summary .toggle-icon::before{content:"−"}
  .shell{padding:0 20px}.masthead-inner{min-height:66px;gap:12px}
  .brand{font-size:10px;letter-spacing:.09em;gap:8px}.github-link{font-size:11px}
  .nav{gap:14px;font-size:11px}.hero{padding:31px 0 24px}.dek{font-size:14px}
- .edition-meta{margin-top:18px;gap:8px 15px}.overview{padding:17px 19px;margin-bottom:26px}
- .overview p{font-size:14px}.section-header{gap:10px}.section-header h2{font-size:12px}
+ .edition-meta{margin-top:18px;gap:8px 15px}
+ .section-header{gap:10px}.section-header h2{font-size:12px}
  .notice-summary{grid-template-columns:22px minmax(0,1fr) 24px;gap:9px;padding:19px 15px}
  .notice-title{font-size:20px}.notice-number{font-size:11px}.notice-meta{font-size:10px;gap:3px 10px}
  .toggle-icon{width:24px;height:24px;font-size:19px}.notice-body{margin:0 16px;padding:18px 0 21px}
@@ -1249,7 +1243,7 @@ details[open]>summary .toggle-icon::before{content:"−"}
 @media print{
  body{background:white;color:black;font-size:11pt}.shell{max-width:none;padding:0}
  .masthead,.nav,.controls,.toggle-icon,.item-tools,.skip-link,.demo-banner{display:none!important}
- .hero{padding:0 0 16px}h1{font-size:30pt}.overview{border:0;padding:0}
+ .hero{padding:0 0 16px}h1{font-size:30pt}
  .notice{box-shadow:none!important;margin-bottom:12px;break-inside:avoid}
  .notice-summary{grid-template-columns:25px minmax(0,1fr);padding:15px}
  .notice-body{margin-left:40px;margin-right:15px;font-size:10pt}
@@ -1690,16 +1684,15 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
          else '<p class="eyebrow">Archived edition</p>' if archive else ''),
         '<p class="dek">Updates on artificial intelligence for mathematical research, '
         'proof discovery and formal verification, with links to papers, code and tools.</p>',
-        '</section>',
-        '<main id="main"><section class="overview" aria-labelledby="overview-heading">',
-        '<h2 id="overview-heading"><span>At a glance</span><span class="edition-meta"><time datetime="' + e(generated.isoformat(), quote=True) + '">'
-        + e(stamp) + '</time><span>' + str(count) + (' entry' if count == 1 else ' entries')
-        + ' · ' + str(source_count) + (' linked source' if source_count == 1 else ' linked sources') + '</span>',
-        '<span class="status status-' + e(digest["status"], quote=True) + '">' + e(status_label) + '</span>',
-        '</span></h2><p>' + e(digest["summary"]) + '</p></section>',
+        '</section><main id="main">',
         '<section aria-labelledby="updates-heading"><div class="section-header">',
         '<h2 id="updates-heading">Research updates<span class="section-count">'
         + ("Select an entry to read more" if count else "No entries in this edition") + '</span></h2>',
+        '<div class="edition-meta"><time datetime="' + e(generated.isoformat(), quote=True) + '">'
+        + e(stamp) + '</time><span>' + str(count) + (' entry' if count == 1 else ' entries')
+        + ' · ' + str(source_count) + (' linked source' if source_count == 1 else ' linked sources') + '</span>',
+        '<span class="status status-' + e(digest["status"], quote=True) + '">' + e(status_label) + '</span>',
+        '</div>',
         '<div class="controls" data-panel-controls hidden>',
         '<button type="button" data-open="true" aria-controls="stories">Expand all</button>',
         '<button type="button" data-open="false" aria-controls="stories">Collapse all</button>',
