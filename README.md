@@ -55,8 +55,7 @@ calls Codex and may use paid API reads; keep it out of the normal daily cron ent
 
 `--private-dir` (alias `--root`) and `--output-dir` are mandatory for every
 run, including initialization and offline actions. `--help` can be used without
-them. The supplied HTML path is saved in the private configuration on each run;
-the saved value does not replace the required argument. The public HTML and
+them. Execution settings are supplied on each command line and are never saved in JSON. The public HTML and
 private data directories must be separate and must not contain one another.
 There are no default paths for these parameters.
 
@@ -66,9 +65,17 @@ both streams to a private log file as shown in the example, and arrange rotation
 if needed. The script sets its own private-file umask.
 
 Codex event/error files are kept in `logs/` under the private directory, with
-automatic cleanup. Existing installations retain their saved `logs_dir` setting;
-there is no `--logs-dir` command-line parameter. The logs directory must not
+automatic cleanup. Use `--logs-dir /path/to/logs` to override this location on each run. The logs directory must not
 overlap the public HTML directory.
+
+Additional execution options are `--codex-bin` (default: `codex` in PATH),
+`--model` (default: Codex's configured model), repeatable `--extra-path DIR`,
+and `--timeout-seconds` (default: 1800, allowed: 30–7200). Repeat your options
+in cron and on each manual run. The inherited PATH is used unless extended with
+`--extra-path`; executable locations are no longer detected and saved at initialization.
+Existing `config.json` files are retained but ignored during ordinary runs.
+Only `--migrate-from` reads the old source configuration to locate files to import;
+it does not copy that configuration to the destination.
 
 For a daily cron run, adapt the paths in [crontab.example](crontab.example),
 initialize the directories once, then paste its cron entry into `crontab -e`.

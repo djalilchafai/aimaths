@@ -2,7 +2,7 @@
 """Veille IA/maths en anglais pour cron, Python >= 3.9, bibliothèque standard.
 
 Codex réalise la recherche et la synthèse ; ce programme valide leur structure,
-crée le HTML public et conserve configuration, état et journaux dans un dossier
+crée le HTML public et conserve sources, état et journaux dans un dossier
 privé distinct. Aucun transfert réseau des fichiers.
 Programme autonome : aim-cron.py ; aucun fichier auxiliaire requis
 à côté du script. Les données ne dépendent ni de son emplacement ni du cwd.
@@ -35,6 +35,17 @@ from zoneinfo import ZoneInfo
 
 PARIS = ZoneInfo("Europe/Paris")
 OUTPUT_LANGUAGE = "en"
+# Execution settings come only from CLI arguments, never from persisted JSON.
+RUNTIME_OPTIONS = {"codex_bin": "codex", "model": "", "extra_path": [],
+                   "timeout_seconds": 1800, "logs_dir": "logs"}
+
+
+def runtime_config(root, output_dir=None):
+    config = RUNTIME_OPTIONS.copy()
+    if output_dir is not None:
+        config["output_dir"] = str(output_dir)
+    return config
+
 # Runtime-only: credentials and CLI settings never enter research context.
 TWITTER_OPTIONS = {"credentials": None, "budget_cents": 500, "max_posts": 30}
 PRIVATE_HTACCESS = """# Managed by aim-cron.py. This directory contains PRIVATE data.
@@ -262,31 +273,14 @@ def prepare_output_directory(public):
 
 def initialize(root, output_dir=None):
     check_private_paths(root)
-    codex = shutil.which("codex") or "codex"
-    paths = []
-    for name in ("codex", "node"):
-        found = shutil.which(name)
-        if found:
-            paths.append(str(Path(found).parent))
-    config_path = root / "config.json"
-    config = (load(config_path) if config_path.exists() else
-              {"codex_bin": codex, "model": "",
-               "extra_path": list(dict.fromkeys(paths)), "timeout_seconds": 1800})
-    if not isinstance(config, dict):
-        raise ValueError("config.json doit contenir un objet JSON")
-    old_config = config.copy()
-    if output_dir is not None:
-        config["output_dir"] = str(output_dir)
+    config = runtime_config(root, output_dir)
     logs = logs_directory(root, config)
-    config["logs_dir"] = str(logs)
     public = output_directory(root, config)
     # Créer d'abord les parents publics ; ne pas enfermer htdocs dans un parent
     # 0700 créé lors de la première initialisation de la zone privée voisine.
     prepare_output_directory(public)
     prepare_private_directory(root)
     prepare_logs_directory(logs)
-    if not config_path.exists() or config != old_config:
-        atomic_write(config_path, dumps(config))
     defaults = {"sources.json": dumps(SOURCES), "prompt.md": PROMPT}
     for name, content in defaults.items():
         target = root / name
@@ -304,7 +298,7 @@ def initialize(root, output_dir=None):
         if not backup.exists():
             atomic_write(backup, previous_prompt)
         atomic_write(prompt_path, PROMPT)
-    for name in ("config.json", "sources.json", "prompt.md"):
+    for name in ("sources.json", "prompt.md"):
         (root / name).chmod(0o600)
     return public
 
@@ -354,12 +348,7 @@ def migrate_legacy(root, source, output_dir=None):
     source_config = load(source / "config.json") if (source / "config.json").exists() else {}
     if not isinstance(source_config, dict):
         raise ValueError("La configuration source doit être un objet JSON")
-    target_config = load(root / "config.json") if (root / "config.json").exists() else source_config.copy()
-    if not isinstance(target_config, dict):
-        raise ValueError("La configuration cible doit être un objet JSON")
-    effective = target_config.copy()
-    if output_dir is not None:
-        effective["output_dir"] = str(output_dir)
+    effective = runtime_config(root, output_dir)
     logs = logs_directory(root, effective)
     public = output_directory(root, effective)
 
@@ -372,18 +361,13 @@ def migrate_legacy(root, source, output_dir=None):
         if dst.exists():
             if not dst.is_file():
                 raise ValueError("Fichier attendu dans la destination : " + str(dst))
-            if src.name == "config.json" and src.parent == source:
-                left, right = load(src), load(dst)
-                left.pop("output_dir", None); right.pop("output_dir", None)
-                if left == right:
-                    return
             if file_hash(src) != file_hash(dst):
                 raise ValueError("Migration refusée : fichier différent déjà présent : " + str(dst))
             return
         plan.append((src, dst, mode))
 
     # Préparer la liste et contrôler toutes les collisions avant la première copie.
-    for name in ("config.json", "sources.json", "prompt.md"):
+    for name in ("sources.json", "prompt.md"):
         if (source / name).exists():
             add(source / name, root / name, 0o600)
     for folder in ("private", "logs"):
@@ -1861,7 +1845,7 @@ def render_saved(root, latest_override=None):
     is atomic; the index is replaced last. A whole-site multi-file transaction
     is not promised in case of a disk error during publication.
     """
-    config = load(root / 'config.json')
+    config = runtime_config(root)
     public = output_directory(root, config)
     latest_path = root / 'private/latest.json'
     if latest_override is None and (not latest_path.is_file() or latest_path.is_symlink()):
@@ -2093,7 +2077,7 @@ Research context:
 def publish_history_record(root, record):
     """Repair/rebuild from a saved result before considering another model call."""
     validate_record(record)
-    public = output_directory(root, load(root / "config.json"))
+    public = output_directory(root, runtime_config(root))
     target = root / "private" / ("edition-" + record["archive"][:-5] + ".json")
     if target.is_symlink():
         raise ValueError("Lien symbolique interdit pour une édition historique")
@@ -2175,7 +2159,7 @@ def bootstrap_month(root, max_days=None, now=None):
             generated = datetime.now(PARIS)
             start, end = history_window(day)
             prompt = build_history_prompt(root, day, generated)
-            config = load(root / "config.json")
+            config = runtime_config(root)
             import uuid
             stem = generated.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
             with tempfile.TemporaryDirectory(prefix="run-", dir=root / "private") as temporary:
@@ -2210,11 +2194,10 @@ def run_codex(root, config, prompt, work, logbase):
     additions = config.get("extra_path", [])
     if not isinstance(additions, list) or any(not isinstance(p, str) for p in additions):
         raise ValueError("extra_path doit être une liste de répertoires")
-    env["PATH"] = os.pathsep.join(additions + [str(Path.home() / ".local/bin"),
-        str(Path.home() / "bin"), "/usr/local/bin", "/usr/bin", "/bin", env.get("PATH", "")])
+    env["PATH"] = os.pathsep.join([os.path.expanduser(p) for p in additions] + [env.get("PATH", "")])
     executable = shutil.which(os.path.expanduser(config["codex_bin"]), path=env["PATH"])
     if not executable:
-        raise RuntimeError("Codex introuvable ; corrigez codex_bin dans config.json")
+        raise RuntimeError("Codex introuvable ; utilisez --codex-bin ou --extra-path")
     timeout = config["timeout_seconds"]
     if type(timeout) is not int or not 30 <= timeout <= 7200:
         raise ValueError("timeout_seconds doit être un entier entre 30 et 7200")
@@ -2273,7 +2256,7 @@ def run_codex(root, config, prompt, work, logbase):
 def update(root, refresh=False):
     import uuid
     now = datetime.now(PARIS)
-    config = load(root / "config.json")
+    config = runtime_config(root)
     public = output_directory(root, config)
     state_path = root / "private/latest.json"
     previous = load(state_path) if state_path.exists() else None
@@ -2323,6 +2306,15 @@ def main(argv=None):
     parser.add_argument("--init", action="store_true", help="Initialiser sans appel à Codex")
     parser.add_argument("--output-dir", type=str, required=True,
                         help="Dossier des pages HTML (obligatoire)")
+    parser.add_argument("--logs-dir", default="logs",
+                        help="Dossier des journaux Codex (défaut : logs sous le dossier privé)")
+    parser.add_argument("--codex-bin", default="codex",
+                        help="Exécutable Codex (défaut : codex dans PATH)")
+    parser.add_argument("--model", default="", help="Modèle Codex (défaut : celui de Codex)")
+    parser.add_argument("--extra-path", action="append", default=[], metavar="DIR",
+                        help="Répertoire à ajouter à PATH ; option répétable")
+    parser.add_argument("--timeout-seconds", type=int, default=1800,
+                        help="Délai maximal Codex, de 30 à 7200 secondes (défaut : 1800)")
     parser.add_argument("--migrate-from", type=Path,
                         help="Avec --init : importer les données d'une ancienne installation sans les supprimer")
     parser.add_argument("--demo", action="store_true", help="Créer demo.html dans output_dir sans réseau ni appel au modèle")
@@ -2355,6 +2347,11 @@ def main(argv=None):
     parser.add_argument('--twitter-max-posts', type=int, default=30,
                         help='Maximum X post reads per research window (default: 30)')
     args = parser.parse_args(argv)
+    if not 30 <= args.timeout_seconds <= 7200:
+        parser.error("--timeout-seconds doit être compris entre 30 et 7200")
+    RUNTIME_OPTIONS.update(output_dir=args.output_dir, logs_dir=args.logs_dir,
+                           codex_bin=args.codex_bin, model=args.model,
+                           extra_path=args.extra_path, timeout_seconds=args.timeout_seconds)
     if not 0 <= args.twitter_monthly_budget <= 100000 or not 5 <= args.twitter_max_posts <= 1000:
         parser.error('Twitter budget must be 0..100000 cents and max-posts 5..1000')
     credential_file = args.twitter_token_file or args.twitter_credentials

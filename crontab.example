@@ -15,3 +15,7 @@ PATH=/usr/local/bin:/usr/bin:/bin
 # Optional X API coverage: append these flags before the log redirection above:
 # --twitter-token-file /absolute/path/aim-private/twitter.token --twitter-monthly-budget 500 --twitter-max-posts 30
 # Protect twitter.token with chmod 600 and set the account spending limit in X's console.
+
+# Execution settings are CLI-only; config.json is ignored. Append as needed:
+# --logs-dir /absolute/path/aim-logs --codex-bin /absolute/path/bin/codex
+# --extra-path /absolute/path/bin --model MODEL --timeout-seconds 1800
