@@ -1680,14 +1680,14 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
         month = ('#month-' + archive_time(current_archive).astimezone(PARIS).strftime('%Y-%m')
                  if current_archive in archive_names else '')
         parts.append('<a href="' + ('../' if archive else '') + 'browse.html' + month + '">Calendar</a>')
-        if archive_names:
-            parts.append(edition_navigation(archive_names, current_archive, archive))
-    parts.append('<a href="#coverage">Coverage</a>')
     parts += [
         ('<div class="daily-search" data-daily-search hidden>'
          + '<input type="search" id="daily-search" aria-label="Find in this edition" placeholder="Topic, researcher or source…">'
          + '</div>') if count else '',
-        '</nav></div></header><div class="shell">']
+    ]
+    if not demo and archive_names:
+        parts.append(edition_navigation(archive_names, current_archive, archive))
+    parts.append('</nav></div></header><div class="shell">')
     if demo:
         parts.append('<aside class="demo-banner"><strong>FICTIONAL DEMO.</strong> '
                      'No research was performed. All entries below are layout examples, not news.</aside>')
@@ -1756,8 +1756,7 @@ def page(digest, generated, start, archive_names, archive=False, demo=False,
         parts.append('<div class="empty-state"><h3>' + heading + '</h3><p>'
                      'See the coverage notes below. Missing access is not evidence that nothing happened.</p></div>')
     parts += ['</div></section><div class="supplement">',
-              '<details class="utility" id="coverage"'
-              + (' open' if digest['status'] in ('partial', 'failed') else '') + '>',
+              '<details class="utility" id="coverage">',
               '<summary><span>Coverage and limitations</span><span class="toggle-icon" aria-hidden="true"></span></summary>',
               '<div class="utility-body"><ul>']
     parts += ['<li>' + e(line) + '</li>' for line in digest["coverage"]]
