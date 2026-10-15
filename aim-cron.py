@@ -2191,7 +2191,8 @@ def run_codex(root, config, prompt, work, logbase):
     additions = config.get("extra_path", [])
     if not isinstance(additions, list) or any(not isinstance(p, str) for p in additions):
         raise ValueError("extra_path doit être une liste de répertoires")
-    env["PATH"] = os.pathsep.join([os.path.expanduser(p) for p in additions] + [env.get("PATH", "")])
+    env["PATH"] = os.pathsep.join(
+        [os.path.expanduser(p) for p in additions] + [env.get("PATH", ""), "/usr/local/bin"])
     executable = shutil.which(os.path.expanduser(config["codex_bin"]), path=env["PATH"])
     if not executable:
         raise RuntimeError("Codex introuvable ; utilisez --codex-bin ou --extra-path")
