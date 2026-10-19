@@ -89,6 +89,32 @@ For a daily cron run, adapt the paths in [crontab.example](crontab.example),
 initialize the directories once, then paste its cron entry into `crontab -e`.
 The schedule uses the cron daemon's local timezone.
 
+## Codex model-cache errors
+
+If a private `*.stderr.log` contains
+`failed to load models cache: missing field base_instructions` (with backticks
+around the field name in the actual message), Codex could not read its cached
+model metadata. This message alone does not establish that synthesis failed:
+aimaths checks the Codex exit status and validates its output separately.
+
+Check the executable selected by cron, including any `--codex-bin` or
+`--extra-path` options, and run that executable with `--version`. Different
+Codex clients sharing a home directory may expect different cache formats.
+Matching version numbers alone do not rule out a cache schema incompatibility.
+
+To try regenerating the cache, first stop Codex clients and pause overlapping
+aimaths research runs. Move the cache aside, preserving a backup:
+
+```sh
+mv "${CODEX_HOME:-$HOME/.codex}/models_cache.json" \
+   "${CODEX_HOME:-$HOME/.codex}/models_cache.json.bak-$(date +%Y%m%d%H%M%S)"
+```
+
+Restart Codex, then check the next research run's private logs. If the same
+error returns, regeneration did not resolve the schema incompatibility; check
+the CLI and any editor integration for compatible updates. Aimaths does not
+modify Codex's shared cache or insert missing model instructions.
+
 ## Optional Twitter/X API coverage
 
 Create an app in the [X Developer Console](https://console.x.com/) and obtain its
